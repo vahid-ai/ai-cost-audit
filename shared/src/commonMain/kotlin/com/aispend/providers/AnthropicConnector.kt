@@ -32,8 +32,19 @@ class AnthropicConnector(private val client: HttpClient) : ProviderConnector {
         if (credentials.apiKey.isBlank()) return FetchResult.NotConfigured
         return try {
             val usage = fetchUsagePages(credentials, range)
-            val costs = fetchCostPages(credentials, range)
-            FetchResult.Success(usage + costs)
+            // Cost report is authoritative when available; otherwise fall back to
+            // pricing estimation (costUsd stays null). A 403 etc. must not fail the provider.
+            val costs = try {
+                fetchCostPages(credentials, range)
+            } catch (e: Exception) {
+                emptyList()
+            }
+            val records = if (costs.isNotEmpty()) {
+                usage.map { it.copy(costUsd = 0.0) } + costs
+            } else {
+                usage
+            }
+            FetchResult.Success(records)
         } catch (e: ApiException) {
             FetchResult.Failure(e.message ?: "HTTP ${e.status}")
         } catch (e: Exception) {

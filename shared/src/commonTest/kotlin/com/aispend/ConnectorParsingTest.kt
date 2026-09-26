@@ -79,13 +79,35 @@ class OpenAiConnectorTest {
         val connector = OpenAiConnector(mockClient(usagePage, costPage))
         val result = connector.fetchUsage(creds, range)
         assertIs<FetchResult.Success>(result)
+        assertEquals(2, result.records.size)
+        val usage = result.records.first { it.inputTokens > 0 }
+        assertEquals("gpt-5", usage.model)
+        assertEquals(1000, usage.inputTokens)
+        assertEquals(500, usage.outputTokens)
+        assertEquals(200, usage.cachedInputTokens)
+        // Cost report present => usage records carry tokens only, no estimation.
+        assertEquals(0.0, usage.costUsd)
+        val cost = result.records.first { it.costUsd != null && it.costUsd > 0 }
+        assertEquals(1.25, cost.costUsd)
+        // Cost-report records keep their bucket date so byDay works.
+        assertEquals(usage.date, cost.date)
+        assertEquals(1.25, result.records.sumOf { it.costUsd ?: 0.0 })
+    }
+
+    @Test
+    fun costReportFailureKeepsEstimation() = runTest {
+        val engine = MockEngine { request ->
+            if (request.url.encodedPath.endsWith("/costs")) {
+                respond("forbidden", HttpStatusCode.Forbidden, jsonHeaders)
+            } else {
+                respond(usagePage, HttpStatusCode.OK, jsonHeaders)
+            }
+        }
+        val connector = OpenAiConnector(HttpClient(engine))
+        val result = connector.fetchUsage(creds, range)
+        assertIs<FetchResult.Success>(result)
         assertEquals(1, result.records.size)
-        val r = result.records.first()
-        assertEquals("gpt-5", r.model)
-        assertEquals(1000, r.inputTokens)
-        assertEquals(500, r.outputTokens)
-        assertEquals(200, r.cachedInputTokens)
-        assertEquals(1.25, r.costUsd)
+        assertEquals(null, result.records.first().costUsd)
     }
 
     @Test
@@ -147,8 +169,28 @@ class AnthropicConnectorTest {
         assertEquals(LocalDate(2026, 9, 2), usage.date)
         assertEquals(860, usage.inputTokens) // 800 + 50 + 10 cache write
         assertEquals(300, usage.cachedInputTokens)
-        val cost = result.records.first { it.costUsd != null }
+        // Cost report present => usage records carry tokens only.
+        assertEquals(0.0, usage.costUsd)
+        val cost = result.records.first { it.costUsd != null && it.costUsd > 0 }
         assertEquals(2.50, cost.costUsd)
+        assertEquals(LocalDate(2026, 9, 2), cost.date)
+        assertEquals(2.50, result.records.sumOf { it.costUsd ?: 0.0 })
+    }
+
+    @Test
+    fun costReportForbiddenStillSucceeds() = runTest {
+        val engine = MockEngine { request ->
+            if (request.url.encodedPath.endsWith("cost_report")) {
+                respond("forbidden", HttpStatusCode.Forbidden, jsonHeaders)
+            } else {
+                respond(usagePage, HttpStatusCode.OK, jsonHeaders)
+            }
+        }
+        val connector = AnthropicConnector(HttpClient(engine))
+        val result = connector.fetchUsage(creds, range)
+        assertIs<FetchResult.Success>(result)
+        assertEquals(1, result.records.size)
+        assertEquals(null, result.records.first().costUsd)
     }
 }
 

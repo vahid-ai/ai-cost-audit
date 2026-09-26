@@ -16,6 +16,8 @@ data class ProviderSpend(
     val inputTokens: Long,
     val outputTokens: Long,
     val unpricedModels: Set<String>,
+    /** True when at least one record's cost came from the pricing table, not the provider. */
+    val estimated: Boolean,
 )
 
 data class ModelSpend(val model: String, val provider: ProviderId, val costUsd: Double, val tokens: Long)
@@ -98,6 +100,7 @@ class SpendRepository(
                 inputTokens = recs.sumOf { it.inputTokens },
                 outputTokens = recs.sumOf { it.outputTokens },
                 unpricedModels = recs.filter { CostEstimator.estimate(it) == null }.mapTo(mutableSetOf()) { it.model },
+                estimated = recs.any { it.costUsd == null && CostEstimator.estimate(it) != null },
             )
         }
         val byModel = records.groupBy { it.provider to it.model }.map { (key, recs) ->

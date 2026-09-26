@@ -125,7 +125,7 @@ private fun DashboardScreen(state: AppState) {
 
             Text("Providers", style = MaterialTheme.typography.titleMedium)
             state.connectors.forEach { connector ->
-                ProviderCard(connector.id, connector.displayName, summary)
+                ProviderCard(connector.id, connector.displayName, summary, state.demoMode)
             }
 
             if (summary.byModel.isNotEmpty()) {
@@ -153,7 +153,7 @@ private fun DashboardScreen(state: AppState) {
 }
 
 @Composable
-private fun ProviderCard(id: ProviderId, name: String, summary: com.aispend.data.SpendSummary) {
+private fun ProviderCard(id: ProviderId, name: String, summary: com.aispend.data.SpendSummary, demoMode: Boolean) {
     val spend = summary.byProvider[id]
     val status = when {
         summary.errors.containsKey(id) -> ProviderStatus.ERROR
@@ -169,7 +169,7 @@ private fun ProviderCard(id: ProviderId, name: String, summary: com.aispend.data
                     when (status) {
                         ProviderStatus.OK -> "ok"
                         ProviderStatus.ERROR -> "error: ${summary.errors[id]}"
-                        ProviderStatus.NOT_CONFIGURED -> "not configured"
+                        ProviderStatus.NOT_CONFIGURED -> if (demoMode) "demo data" else "not configured"
                         ProviderStatus.UNSUPPORTED -> "unsupported (manual entry)"
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -181,11 +181,17 @@ private fun ProviderCard(id: ProviderId, name: String, summary: com.aispend.data
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("$${fmtUsd(spend?.costUsd ?: 0.0)}", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    (if (spend?.estimated == true) "≈" else "") + "$${fmtUsd(spend?.costUsd ?: 0.0)}",
+                    style = MaterialTheme.typography.titleSmall,
+                )
                 Text(
                     "in ${fmtTokens(spend?.inputTokens ?: 0)} / out ${fmtTokens(spend?.outputTokens ?: 0)}",
                     style = MaterialTheme.typography.bodySmall,
                 )
+                if (spend?.estimated == true) {
+                    Text("estimated from list prices", style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
     }

@@ -40,8 +40,19 @@ class OpenAiConnector(private val client: HttpClient) : ProviderConnector {
         if (credentials.apiKey.isBlank()) return FetchResult.NotConfigured
         return try {
             val usage = fetchUsagePages(credentials, range)
-            val costs = fetchCostPages(credentials, range)
-            FetchResult.Success(merge(usage, costs))
+            // Cost report is authoritative when available; otherwise fall back to
+            // pricing estimation (costUsd stays null). A 403 etc. must not fail the provider.
+            val costs = try {
+                fetchCostPages(credentials, range)
+            } catch (e: Exception) {
+                emptyList()
+            }
+            val records = if (costs.isNotEmpty()) {
+                usage.map { it.copy(costUsd = 0.0) } + costs
+            } else {
+                usage
+            }
+            FetchResult.Success(records)
         } catch (e: ApiException) {
             FetchResult.Failure(e.message ?: "HTTP ${e.status}")
         } catch (e: Exception) {
@@ -130,18 +141,6 @@ class OpenAiConnector(private val client: HttpClient) : ProviderConnector {
             page = if (root.bool("has_more") == true) root.text("next_page") else null
         } while (page != null)
         return records
-    }
-
-    private fun merge(usage: List<UsageRecord>, costs: List<UsageRecord>): List<UsageRecord> {
-        // Attach cost data by (date, model) where the line item matches a model name.
-        val costByKey = costs.groupBy { it.date to it.model }
-        val merged = usage.map { rec ->
-            val cost = costByKey[rec.date to rec.model]?.sumOf { it.costUsd ?: 0.0 }
-            if (cost != null) rec.copy(costUsd = cost) else rec
-        }
-        val usageKeys = usage.mapTo(mutableSetOf()) { it.date to it.model }
-        val unmatchedCosts = costs.filter { (it.date to it.model) !in usageKeys }
-        return merged + unmatchedCosts
     }
 
     private fun epochToDate(epochSeconds: Long?): LocalDate? = epochSeconds?.let {

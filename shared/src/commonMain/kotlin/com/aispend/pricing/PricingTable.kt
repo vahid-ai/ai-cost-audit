@@ -58,11 +58,15 @@ object PricingTable {
         "meta-llama/llama-3.1-405b" to ModelPrice(3.5, 3.5),
         "deepseek-ai/deepseek-v3" to ModelPrice(1.25, 1.25),
         "deepseek-ai/deepseek-r1" to ModelPrice(3.0, 7.0),
-        "qwen" to ModelPrice(0.8, 0.8),
         // OpenRouter (aggregator; same underlying list prices apply)
-        "openai/" to ModelPrice(1.25, 10.0),
+        "openai/gpt-5-mini" to ModelPrice(0.25, 2.0, 0.025),
+        "openai/gpt-5" to ModelPrice(1.25, 10.0, 0.125),
+        "openai/gpt-4.1" to ModelPrice(2.0, 8.0, 0.5),
+        "openai/gpt-4o-mini" to ModelPrice(0.15, 0.6, 0.075),
+        "openai/gpt-4o" to ModelPrice(2.5, 10.0, 1.25),
         "anthropic/claude-sonnet" to ModelPrice(3.0, 15.0, 0.3),
         "anthropic/claude-opus" to ModelPrice(15.0, 75.0, 1.5),
+        "anthropic/claude-haiku" to ModelPrice(0.8, 4.0, 0.08),
         "google/gemini-2.5" to ModelPrice(1.25, 10.0, 0.31),
         "deepseek/" to ModelPrice(0.27, 1.1, 0.07),
     )
