@@ -102,11 +102,13 @@ class AppState(
         demoMode = enabled
         credentialsStore.demoMode = enabled
         if (enabled) loadDemo() else demoRecords.clear()
+        repository.invalidate()
         refresh()
     }
 
     fun addManualRecord(record: UsageRecord) {
         manualUsageStore.add(record)
+        repository.invalidate()
         refresh()
     }
 

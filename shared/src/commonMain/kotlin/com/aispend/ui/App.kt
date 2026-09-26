@@ -155,6 +155,7 @@ private fun DashboardScreen(state: AppState) {
 @Composable
 private fun ProviderCard(id: ProviderId, name: String, summary: com.aispend.data.SpendSummary, demoMode: Boolean) {
     val spend = summary.byProvider[id]
+    val hasSpend = spend != null
     val status = when {
         summary.errors.containsKey(id) -> ProviderStatus.ERROR
         summary.unsupported.contains(id) -> ProviderStatus.UNSUPPORTED
@@ -166,11 +167,14 @@ private fun ProviderCard(id: ProviderId, name: String, summary: com.aispend.data
             Column(Modifier.weight(1f)) {
                 Text(name, style = MaterialTheme.typography.titleSmall)
                 Text(
-                    when (status) {
-                        ProviderStatus.OK -> "ok"
-                        ProviderStatus.ERROR -> "error: ${summary.errors[id]}"
-                        ProviderStatus.NOT_CONFIGURED -> if (demoMode) "demo data" else "not configured"
-                        ProviderStatus.UNSUPPORTED -> "unsupported (manual entry)"
+                    when {
+                        status == ProviderStatus.ERROR -> "error: ${summary.errors[id]}"
+                        demoMode && hasSpend &&
+                            (status == ProviderStatus.NOT_CONFIGURED || status == ProviderStatus.UNSUPPORTED) ->
+                            "demo data"
+                        status == ProviderStatus.UNSUPPORTED -> "unsupported (manual entry)"
+                        status == ProviderStatus.NOT_CONFIGURED -> "not configured"
+                        else -> "ok"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = when (status) {

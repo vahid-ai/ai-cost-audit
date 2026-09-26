@@ -43,6 +43,9 @@ class SpendRepository(
 ) {
     private val cache = mutableMapOf<DateRange, SpendSummary>()
 
+    /** Drops all cached summaries; call after records change (manual entry, demo data). */
+    fun invalidate() = cache.clear()
+
     suspend fun summary(range: DateRange, forceRefresh: Boolean = false): SpendSummary {
         if (!forceRefresh) cache[range]?.let { return it }
         val (records, errors, notConfigured, unsupported) = fetchAll(range)
