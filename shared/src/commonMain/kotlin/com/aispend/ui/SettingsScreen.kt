@@ -86,17 +86,15 @@ private fun ProviderCredentialRow(state: AppState, connector: com.aispend.model.
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = {
-                        state.credentialsStore.save(
+                        state.saveCredentials(
                             connector.id,
                             ProviderCredentials(apiKey.trim(), orgId.trim().ifBlank { null }),
                         )
-                        state.refresh()
                     }) { Text("Save") }
                     TextButton(onClick = {
                         apiKey = ""
                         orgId = ""
-                        state.credentialsStore.clear(connector.id)
-                        state.refresh()
+                        state.clearCredentials(connector.id)
                     }) { Text("Clear") }
                 }
             } else {

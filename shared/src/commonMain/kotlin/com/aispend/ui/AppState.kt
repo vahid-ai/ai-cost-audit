@@ -106,6 +106,18 @@ class AppState(
         refresh()
     }
 
+    fun saveCredentials(provider: com.aispend.model.ProviderId, credentials: com.aispend.model.ProviderCredentials) {
+        credentialsStore.save(provider, credentials)
+        repository.invalidate()
+        refresh()
+    }
+
+    fun clearCredentials(provider: com.aispend.model.ProviderId) {
+        credentialsStore.clear(provider)
+        repository.invalidate()
+        refresh()
+    }
+
     fun addManualRecord(record: UsageRecord) {
         manualUsageStore.add(record)
         repository.invalidate()
