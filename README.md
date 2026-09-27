@@ -67,6 +67,6 @@ real keys. Never commit `local.properties` or any key material.
 
 ## Stack
 
-Kotlin 2.3.21, Compose Multiplatform 1.9.3, AGP 8.13.2, Gradle 8.14.3 (wrapper),
+Kotlin 2.3.21, Compose Multiplatform 1.8.2, AGP 8.4.1, Gradle 8.14.3 (wrapper),
 Ktor 3.5.0, kotlinx-serialization 1.9.0, kotlinx-datetime 0.7.1,
 kotlinx-coroutines 1.10.2, multiplatform-settings 1.3.0.
