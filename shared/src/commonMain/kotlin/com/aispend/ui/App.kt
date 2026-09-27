@@ -1,6 +1,7 @@
 package com.aispend.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -91,19 +92,24 @@ private fun DashboardScreen(state: AppState) {
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("AI Spend", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.weight(1f))
+            TextButton(onClick = { state.refresh() }, enabled = !state.loading) {
+                Text("Refresh")
+            }
+        }
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             RangeOption.entries.forEach { opt ->
                 FilterChip(
                     selected = state.rangeOption == opt,
                     onClick = { state.setRange(opt) },
                     label = { Text(opt.label) },
-                    modifier = Modifier.padding(start = 4.dp),
+                    modifier = Modifier.padding(end = 8.dp),
                 )
-            }
-            TextButton(onClick = { state.refresh() }, enabled = !state.loading) {
-                Text("Refresh")
             }
         }
 
